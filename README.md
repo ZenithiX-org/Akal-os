@@ -13,53 +13,6 @@ A premium macOS-style desktop environment that runs entirely in your browser. Bu
 - **Custom logo** — an abstract rising-sun emblem symbolizing "Akal" (timeless/eternal)
 - **17 working apps** — Finder, Safari, Notes, Calculator, Terminal, Settings, Calendar, Music, Messages, Photos, App Store, Mail, Reminders, Maps, FaceTime, Trash, Weather
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) 18+ or [Bun](https://bun.sh/) runtime
-
-### Installation
-
-```bash
-# Install dependencies
-bun install
-# or
-npm install
-
-# Start the dev server
-bun run dev
-# or
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### Available Scripts
-
-| Script | Description |
-|--------|-------------|
-| `bun run dev` | Start the dev server on port 3000 |
-| `bun run build` | Build for production |
-| `bun run start` | Start the production server |
-| `bun run lint` | Run ESLint |
-| `bun run db:push` | Push Prisma schema to SQLite database |
-
-## 🎮 How to Use
-
-| Action | Shortcut / Action |
-|--------|-------------------|
-| Open Spotlight | `⌘ + Space` (or `Ctrl + Space`) |
-| Open Mission Control | `⌘ + M` (or `Ctrl + M`) |
-| Close overlays | `Esc` |
-| Open Launchpad | Click 🚀 in the dock |
-| Open Control Center | Click the grid icon (top-right) |
-| Switch language | Control Center → 🌐 Language |
-| Right-click desktop | For context menu |
-| Drag window | By its title bar |
-| Resize window | From any edge or corner |
-| Maximize window | Double-click title bar |
-
 ## 🏗️ Project Structure
 
 ```
@@ -136,12 +89,6 @@ Edit the `WALLPAPERS` array in `src/lib/os-store.ts` to add your own gradient wa
 ### Accent Colors
 Change the accent color in Settings → Appearance.
 
-### Adding a New App
-1. Create `src/components/os/apps/MyApp.tsx`
-2. Add a case in the `AppRenderer` switch in `src/components/os/Desktop.tsx`
-3. Add the app to the `dockApps` array in `src/components/os/Dock.tsx`
-4. Add translations in `src/lib/i18n.ts`
-
 ## 🛠️ Tech Stack
 
 | Technology | Purpose |
@@ -155,11 +102,6 @@ Change the accent color in Settings → Appearance.
 | [date-fns](https://date-fns.org/) | Date formatting |
 | [Prisma](https://www.prisma.io/) | ORM (SQLite) |
 | [shadcn/ui](https://ui.shadcn.com/) | UI components |
-
-## 📄 License
-
-MIT — feel free to use this project for learning or as a starting point for your own browser-based OS.
-
 ---
 
-**Akal OS** — *ਅਕਾਲ OS* — © 2024. Made with ❤️ in Punjab.
+**Akal OS** — *ਅਕਾਲ OS* — Made with ❤️ in Punjab.
