@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Akal OS
+Comment=Akal OS Kiosk Session
+Exec=/home/akal/.xsession
+Type=Application
+DesktopNames=AkalOS

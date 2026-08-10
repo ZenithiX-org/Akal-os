@@ -1,0 +1,17 @@
+[Unit]
+Description=Akal OS Web Server (Next.js standalone)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=akal
+Group=akal
+Environment=NODE_ENV=production
+Environment=AKAL_RUNTIME=kiosk
+ExecStart=/usr/local/bin/akal-start-web
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+[Unit]
+Description=Akal OS Kiosk (Xorg + Chromium)
+After=akal-web.service display-manager.service
+Requires=akal-web.service
+
+[Service]
+Type=simple
+User=akal
+Group=akal
+PAMName=login
+Environment=DISPLAY=:0
+ExecStartPre=/usr/bin/xinit -- /usr/bin/Xorg :0 -br -nolisten tcp vt7 -auth /home/akal/.Xauthority -- :
+ExecStart=/usr/local/bin/akal-start-kiosk
+Restart=always
+RestartSec=5
+TTYPath=/dev/tty7
+TTYReset=yes
+TTYVHangup=yes
+
+[Install]
+WantedBy=graphical.target

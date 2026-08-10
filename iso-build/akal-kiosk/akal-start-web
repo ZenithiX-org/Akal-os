@@ -1,0 +1,15 @@
+#!/bin/sh
+# /usr/local/bin/akal-start-web
+# Starts the Akal OS Next.js standalone server on localhost:3000.
+# Runs as the `akal` user via the akal-web systemd service.
+
+set -e
+
+APP_DIR="/usr/share/akal-os"
+export NODE_ENV=production
+export AKAL_RUNTIME=kiosk
+export PORT=3000
+export HOSTNAME=127.0.0.1
+
+cd "$APP_DIR"
+exec node server.js

@@ -1,0 +1,35 @@
+#!/bin/sh
+# /home/akal/.xsession — Akal OS kiosk session
+# Starts openbox (minimal window manager) then launches Chromium kiosk.
+
+# Hide the mouse cursor when idle (optional - uncomment to enable)
+# unclutter -idle 1 &
+
+# Start a minimal window manager so Chromium can go fullscreen properly
+openbox-session &
+
+# Give openbox a moment to start
+sleep 1
+
+# Wait for the web server to come up, then launch Chromium kiosk
+for i in $(seq 1 60); do
+  if curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+exec chromium \
+  --kiosk \
+  --noerrdialogs \
+  --disable-translate \
+  --no-first-run \
+  --fast \
+  --fast-start \
+  --disable-session-crashed-bubble \
+  --disable-infobars \
+  --autoplay-policy=no-user-gesture-required \
+  --ignore-gpu-blocklist \
+  --enable-gpu-rasterization \
+  --user-data-dir=/home/akal/.chromium \
+  http://127.0.0.1:3000/

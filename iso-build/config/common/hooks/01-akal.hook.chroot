@@ -1,0 +1,119 @@
+#!/bin/sh
+# live-build chroot script — runs inside the chroot after packages are installed.
+# Sets up the Akal OS user, kiosk session, branding, and services.
+
+set -e
+
+echo "=== Akal OS: configuring chroot ==="
+
+# --- 1. Create the akal user (passwordless, autologin) ---
+if ! id akal >/dev/null 2>&1; then
+  useradd -m -s /bin/bash -G sudo,netdev,audio,video,plugdev akal
+  # Lock the password but allow login (kiosk mode — no password needed)
+  passwd -d akal
+fi
+
+# Ensure akal is in the autologin group (Debian convention)
+getent group autologin >/dev/null 2>&1 || groupadd autologin
+usermod -aG autologin akal
+
+# --- 2. Install kiosk session files ---
+install -m 0755 /usr/share/akal-os/bin/akal-start-web   /usr/local/bin/akal-start-web
+install -m 0755 /usr/share/akal-os/bin/akal-start-kiosk /usr/local/bin/akal-start-kiosk
+
+# LightDM autologin config
+install -m 0644 /usr/share/akal-os/bin/lightdm.conf /etc/lightdm/lightdm.conf.d/01-akal-autologin.conf
+mkdir -p /etc/lightdm/lightdm.conf.d
+
+# xsession for the akal user
+install -m 0755 /usr/share/akal-os/bin/xsession /home/akal/.xsession
+chown akal:akal /home/akal/.xsession
+
+# Session desktop file (so LightDM sees the "akal" session)
+install -m 0644 /usr/share/akal-os/bin/akal.desktop /usr/share/xsessions/akal.desktop
+
+# --- 3. systemd services ---
+install -m 0644 /usr/share/akal-os/bin/akal-web.service   /etc/systemd/system/akal-web.service
+install -m 0644 /usr/share/akal-os/bin/akal-kiosk.service /etc/systemd/system/akal-kiosk.service
+
+# Enable services (lightdm starts the session; akal-web starts the Node server)
+systemctl enable lightdm.service || true
+systemctl enable akal-web.service || true
+
+# --- 4. Sudoers: allow akal to poweroff/reboot/suspend without password ---
+cat > /etc/sudoers.d/akal-power <<'EOF'
+akal ALL=(root) NOPASSWD: /usr/bin/systemctl poweroff
+akal ALL=(root) NOPASSWD: /usr/bin/systemctl reboot
+akal ALL=(root) NOPASSWD: /usr/bin/systemctl suspend
+EOF
+chmod 0440 /etc/sudoers.d/akal-power
+
+# Wrap systemctl so the akal user's calls go through sudo (for the power API).
+# The Next.js power API calls `systemctl <cmd>` directly; in kiosk mode the
+# akal user can run those three commands via sudo without a password. We make
+# a small wrapper that the akal web service uses.
+cat > /usr/local/bin/akal-systemctl <<'EOF'
+#!/bin/sh
+# Routes allowed systemctl power commands through sudo for the akal user.
+case "$1" in
+  poweroff|reboot|suspend)
+    exec sudo /usr/bin/systemctl "$@"
+    ;;
+  *)
+    exec /usr/bin/systemctl "$@"
+    ;;
+esac
+EOF
+chmod 0755 /usr/local/bin/akal-systemctl
+
+# Prepend the wrapper to the akal user's PATH
+cat > /etc/profile.d/akal-path.sh <<'EOF'
+export PATH="/usr/local/bin:$PATH"
+EOF
+chmod 0755 /etc/profile.d/akal-path.sh
+
+# --- 5. Hostname & hosts ---
+echo "akal-os" > /etc/hostname
+cat > /etc/hosts <<'EOF'
+127.0.0.1   localhost akal-os
+::1         localhost ip6-localhost ip6-loopback
+EOF
+
+# --- 6. Plymouth boot splash ---
+# Install the akal-os plymouth theme (uses the spinner theme with our logo)
+if [ -d /usr/share/plymouth/themes/akal-os ]; then
+  plymouth-set-default-theme -R akal-os || true
+fi
+
+# --- 7. GRUB branding ---
+# Set GRUB background and menu name
+cat > /etc/default/grub.d/50-akal.cfg <<'EOF'
+GRUB_DISTRIBUTOR="Akal OS"
+GRUB_TIMEOUT=3
+GRUB_BACKGROUND="/usr/share/backgrounds/akal-grub.png"
+GRUB_GFXMODE=1920x1080,1280x720,auto
+GRUB_GFXPAYLOAD_LINUX=keep
+EOF
+
+# --- 8. Default wallpaper (used by the web OS if it reads from disk) ---
+# The wallpapers live in the Next.js app as CSS gradients, so nothing to do here.
+
+# --- 9. Disable screen blanking / sleep (kiosk should always be on) ---
+mkdir -p /etc/X11/xorg.conf.d
+cat > /etc/X11/xorg.conf.d/10-akal-noblank.conf <<'EOF'
+Section "ServerFlags"
+    Option "BlankTime"   "0"
+    Option "StandbyTime" "0"
+    Option "SuspendTime" "0"
+    Option "OffTime"     "0"
+EndSection
+Section "Screen"
+    Identifier "Screen0"
+    Option "DPMS" "false"
+EndSection
+EOF
+
+# --- 10. Make sure Node can bind to port 3000 without privilege issues ---
+# (Node standalone on port 3000 doesn't need root — no action needed)
+
+echo "=== Akal OS: chroot configuration complete ==="

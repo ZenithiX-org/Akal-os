@@ -1,0 +1,58 @@
+# live-build: package list to install in the chroot
+# These are the packages that make up the Akal OS live system.
+
+# --- Kernel & base ---
+linux-image-amd64
+live-boot
+initramfs-tools
+
+# --- Bootloader (GRUB for UEFI + BIOS hybrid ISO) ---
+grub-pc-bin
+grub-efi-amd64-bin
+mtools
+
+# --- Display server & kiosk stack ---
+xserver-xorg
+xserver-xorg-video-all
+xserver-xorg-input-all
+xinit
+openbox
+chromium
+lightdm
+
+# --- Networking ---
+network-manager
+iproute2
+iputils-ping
+curl
+wireless-tools
+
+# --- Node.js runtime (for the Akal OS web server) ---
+nodejs
+
+# --- Boot splash ---
+plymouth
+plymouth-themes
+plymouth-label
+
+# --- Audio (so the Music app can play if needed) ---
+alsa-utils
+pulseaudio
+pavucontrol
+
+# --- Fonts (including Gurmukhi/Punjabi support) ---
+fonts-noto-core
+fonts-noto-color-emoji
+fonts-noto-cjk
+fonts-lohit-guru
+fonts-dejavu-core
+fonts-liberation
+
+# --- Utilities ---
+sudo
+htop
+less
+nano
+ca-certificates
+dbus
+polkitd

@@ -1,0 +1,39 @@
+# Akal OS Plymouth theme script
+# Based on the standard spinner theme. Shows a centered logo + Debian-style
+# spinning ring, with a progress bar at the bottom.
+
+logo_image = Image("logo.png");
+logo_sprite = Sprite(logo_image);
+logo_sprite.SetPosition(Window.GetWidth() / 2 - logo_image.GetWidth() / 2,
+                         Window.GetHeight() / 2 - logo_image.GetHeight() / 2 - 40);
+
+# Spinning ring
+fun refresh_callback() {
+    time = Plymouth.GetProgress();
+    # The ring rotation is handled by the built-in spinner; we just position our logo.
+}
+Plymouth.SetRefreshFunction(refresh_callback);
+
+# Progress bar at the bottom
+progress_box_x = Window.GetWidth() / 2 - 100;
+progress_box_y = Window.GetHeight() - 60;
+progress_box_width = 200;
+progress_box_height = 4;
+
+progress_box = Sprite();
+progress_box.SetPosition(progress_box_x, progress_box_y, 0);
+
+progress_bar = Sprite();
+progress_bar.SetPosition(progress_box_x, progress_box_y, 0);
+
+fun progress_callback(duration, progress) {
+    if (progress_bar_image.GetWidth() != int(progress_box_width * progress)) {
+        progress_bar_image = progress_box_image.Scale(int(progress_box_width * progress), progress_box_height);
+        progress_bar.SetImage(progress_bar_image);
+    }
+}
+Plymouth.SetBootProgressFunction(progress_callback);
+
+# Background fill
+Window.SetBackgroundTopColor(13, 0, 8);
+Window.SetBackgroundBottomColor(26, 15, 46);
