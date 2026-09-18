@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useEffect, useCallback } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useOSStore } from '@/lib/os-store';
 
 // Shell components
 import MenuBar from './MenuBar';
+import Logo from './Logo';
 import Dock from './Dock';
 import Window from './Window';
 import ControlCenter from './ControlCenter';
@@ -16,6 +17,7 @@ import LockScreen from './LockScreen';
 import MissionControl from './MissionControl';
 import BootScreen from './BootScreen';
 import { useT } from '@/lib/use-i18n';
+import { shellTokens, withAlpha } from '@/lib/ui-tokens';
 
 // Apps
 import FinderApp from './apps/FinderApp';
@@ -73,12 +75,23 @@ const Desktop: React.FC = () => {
     setLockScreen, toggleMissionControl, toggleSpotlight,
     controlCenterOpen, toggleControlCenter,
     notificationCenterOpen, toggleNotificationCenter,
-    contextMenu, setContextMenu, setWallpaper,
+    contextMenu, setContextMenu,
     isBooting, finishBoot, brightness,
+    accentColor, toggleDarkMode, toggleLaunchpad, openWindow,
   } = useOSStore();
   const t = useT();
+  const tokens = shellTokens(darkMode, accentColor);
 
   const isGradient = wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient');
+
+  // Expose the runtime accent as CSS variables so pure-CSS utilities
+  // (.glass-pill.active, sliders, focus rings, Mission Control rings) follow it.
+  const accentVars = {
+    '--accent': accentColor,
+    '--accent-soft': withAlpha(accentColor, 0.18),
+    '--accent-glow': withAlpha(accentColor, 0.45),
+    '--accent-contrast': '#ffffff',
+  } as React.CSSProperties;
 
   const handleDesktopRightClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -89,13 +102,15 @@ const Desktop: React.FC = () => {
         { label: t.menu.newFolder, action: () => {} },
         { label: t.menu.getInfo, action: () => {} },
         { separator: true },
-        { label: t.settings.wallpaper + '...', action: () => setWallpaper('radial-gradient(ellipse at 30% 20%, #2a1830 0%, #1a1024 35%, #0d0814 75%, #060409 100%)') },
-        { label: 'Use Stacks', action: () => {} },
+        { label: t.appName.launchpad, action: toggleLaunchpad },
+        { label: t.settings.wallpaper + '…', action: () => openWindow('settings', t.appName.settings, 820, 600) },
+        { label: t.menu.darkMode, action: toggleDarkMode },
         { separator: true },
-        { label: 'Show View Options', action: () => {} },
+        { label: t.spotlight.placeholder, action: toggleSpotlight },
+        { label: t.menu.lockScreen, action: () => setLockScreen(true) },
       ],
     });
-  }, [setContextMenu, setWallpaper, t]);
+  }, [setContextMenu, t, toggleLaunchpad, openWindow, toggleDarkMode, toggleSpotlight, setLockScreen]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -123,6 +138,7 @@ const Desktop: React.FC = () => {
     <div
       className="fixed inset-0 overflow-hidden"
       style={{
+        ...accentVars,
         backgroundImage: isGradient ? wallpaper : `url(${wallpaper})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -161,40 +177,36 @@ const Desktop: React.FC = () => {
       <Launchpad />
       <MissionControl />
 
-      {/* Context Menu — neomorphic raised surface */}
+      {/* Context Menu — raised glass surface that follows the appearance + accent */}
       {contextMenu && (
         <div
-          className="fixed z-[9999] rounded-xl py-1 min-w-[200px]"
+          className="fixed z-[9999] rounded-xl py-1 min-w-[210px] shell-panel-in"
           style={{
-            left: Math.min(contextMenu.x, (typeof window !== 'undefined' ? window.innerWidth : 9999) - 220),
-            top: Math.min(contextMenu.y, (typeof window !== 'undefined' ? window.innerHeight : 9999) - 200),
-            background: darkMode ? '#1e1e28' : '#ebebf2',
-            boxShadow: darkMode
-              ? '12px 12px 30px rgba(0,0,0,0.6), -4px -4px 14px rgba(255,255,255,0.02), inset 0 1px 0 rgba(255,255,255,0.06)'
-              : '10px 10px 28px rgba(0,0,0,0.15), -4px -4px 14px rgba(255,255,255,0.9), inset 0 1px 0 rgba(255,255,255,0.5)',
-            border: darkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(0,0,0,0.04)',
+            left: Math.min(contextMenu.x, (typeof window !== 'undefined' ? window.innerWidth : 9999) - 230),
+            top: Math.min(contextMenu.y, (typeof window !== 'undefined' ? window.innerHeight : 9999) - 250),
+            background: tokens.menu,
+            boxShadow: tokens.shadow,
+            border: `1px solid ${tokens.border}`,
+            backdropFilter: 'blur(30px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(30px) saturate(180%)',
           }}
           onClick={(e) => e.stopPropagation()}
         >
           {contextMenu.items.map((item: any, i: number) =>
             item.separator ? (
-              <div key={i} className="my-1 mx-2 h-px" style={{ background: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }} />
+              <div key={i} className="my-1 mx-2 h-px" style={{ background: tokens.divider }} />
             ) : (
               <button
                 key={i}
-                className="w-full flex items-center px-4 py-1.5 text-sm rounded-lg mx-0.5 transition-all"
-                style={{ color: darkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)', width: 'calc(100% - 4px)' }}
+                className="flex items-center w-full px-3 py-1 rounded-lg transition-colors"
+                style={{ fontSize: 12.5, color: tokens.text, width: 'calc(100% - 8px)', margin: '0 4px' }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = darkMode ? 'linear-gradient(145deg, #2a2a38, #1e1e28)' : 'linear-gradient(145deg, #f0f0f5, #d8d8e0)';
-                  e.currentTarget.style.boxShadow = darkMode
-                    ? 'inset 2px 2px 5px rgba(0,0,0,0.4), inset -1px -1px 2px rgba(255,255,255,0.04)'
-                    : 'inset 2px 2px 5px rgba(0,0,0,0.1), inset -1px -1px 2px rgba(255,255,255,0.8)';
-                  e.currentTarget.style.color = darkMode ? '#fff' : '#000';
+                  e.currentTarget.style.background = tokens.accent;
+                  e.currentTarget.style.color = tokens.accentContrast;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.color = darkMode ? 'rgba(255,255,255,0.88)' : 'rgba(0,0,0,0.8)';
+                  e.currentTarget.style.color = tokens.text;
                 }}
                 onClick={() => { item.action?.(); setContextMenu(null); }}
               >
@@ -215,12 +227,41 @@ const Desktop: React.FC = () => {
         {isBooting && <BootScreen />}
       </AnimatePresence>
 
-      {/* Welcome hint — only when no windows open. Quiet, directional. */}
+      {/* Welcome hint — only when no windows are open. Quiet, directional. */}
       {windows.length === 0 && !isBooting && !isLockScreen && !launchpadOpen && !missionControl && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none z-10">
-          <div className="text-white/85 text-xl font-light mb-1.5 drop-shadow-lg">{t.common.welcome}</div>
-          <div className="text-white/45 text-xs font-light drop-shadow-lg">{t.common.welcomeSub}</div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none z-10"
+        >
+          <div className="flex justify-center mb-4 opacity-80">
+            <Logo size={34} color="#F57C00" />
+          </div>
+          <div className="text-white/90 font-light mb-1.5" style={{ fontSize: 21, letterSpacing: '0.01em', textShadow: '0 2px 16px rgba(0,0,0,0.6)' }}>
+            {t.common.welcome}
+          </div>
+          <div className="text-white/50 font-light" style={{ fontSize: 12.5, textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>
+            {t.common.welcomeSub}
+          </div>
+          <div className="flex items-center justify-center gap-3 mt-6" style={{ fontSize: 11 }}>
+            {['⌘ Space — ' + t.spotlight.placeholder, '⌘ M — Mission Control'].map((hint) => (
+              <span
+                key={hint}
+                className="px-2.5 py-1 rounded-full"
+                style={{
+                  color: 'rgba(255,255,255,0.6)',
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  backdropFilter: 'blur(12px)',
+                  WebkitBackdropFilter: 'blur(12px)',
+                }}
+              >
+                {hint}
+              </span>
+            ))}
+          </div>
+        </motion.div>
       )}
     </div>
   );

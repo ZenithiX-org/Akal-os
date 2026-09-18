@@ -83,7 +83,7 @@ const SettingsApp: React.FC = () => {
     wifi, toggleWifi, bluetooth, toggleBluetooth,
     volume, setVolume, brightness, setBrightness,
     doNotDisturb, toggleDoNotDisturb, focusMode, toggleFocusMode,
-    battery,
+    battery, accentColor, setAccentColor,
   } = useOSStore();
   void darkMode;
 
@@ -172,15 +172,18 @@ const SettingsApp: React.FC = () => {
               <Row label={t.settings.accentColor} last>
                 <div className="flex gap-2">
                   {['#d70a53', '#FF3B30', '#FF9500', '#FFD60A', '#33d17a', '#BF5AF2', '#5E5CE6'].map((c) => {
-                    const isAccent = c === ACCENT;
+                    const isSelected = c.toLowerCase() === accentColor.toLowerCase();
                     return (
                       <button
                         key={c}
-                        className="w-5 h-5 rounded-full border-2"
+                        onClick={() => setAccentColor(c)}
+                        aria-label={`${t.settings.accentColor} ${c}`}
+                        aria-pressed={isSelected}
+                        className="w-5 h-5 rounded-full transition-transform hover:scale-110"
                         style={{
                           background: c,
-                          borderColor: isAccent ? '#fff' : 'transparent',
-                          boxShadow: isAccent ? `0 0 8px ${ACCENT}` : 'none',
+                          border: isSelected ? '2px solid #fff' : '2px solid transparent',
+                          boxShadow: isSelected ? `0 0 10px ${c}` : 'none',
                         }}
                       />
                     );

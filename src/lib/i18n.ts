@@ -146,6 +146,8 @@ interface Translation {
     notifications: string;
     silenced: string;
     noNotifications: string;
+    connected: string;
+    offline: string;
   };
   // Spotlight
   spotlight: {
@@ -438,6 +440,7 @@ const en: Translation = {
     title: 'Akal OS', welcomeMsg: 'Welcome to Akal OS 1.0! Explore the dock and launchpad.',
     calendarMsg: 'Team Meeting in 15 minutes', notifications: 'Notifications',
     silenced: 'Notifications (Silenced)', noNotifications: 'No Notifications',
+    connected: 'Connected', offline: 'Offline',
   },
   spotlight: {
     placeholder: 'Spotlight Search', application: 'Application', command: 'Command', noResults: 'No results for',
@@ -669,6 +672,7 @@ const pa: Translation = {
     title: 'ਅਕਾਲ OS', welcomeMsg: 'ਅਕਾਲ OS 1.0 ਵਿੱਚ ਜੀ ਆਇਆਂ ਨੂੰ! ਡੌਕ ਅਤੇ ਲਾਂਚਪੈਡ ਖੋਜੋ।',
     calendarMsg: 'ਟੀਮ ਮੀਟਿੰਗ 15 ਮਿੰਟਾਂ ਵਿੱਚ', notifications: 'ਨੋਟੀਫਿਕੇਸ਼ਨ',
     silenced: 'ਨੋਟੀਫਿਕੇਸ਼ਨ (ਮੌਨ)', noNotifications: 'ਕੋਈ ਨੋਟੀਫਿਕੇਸ਼ਨ ਨਹੀਂ',
+    connected: 'ਜੁੜਿਆ ਹੋਇਆ', offline: 'ਆਫ਼ਲਾਈਨ',
   },
   spotlight: {
     placeholder: 'ਸਪਾਟਲਾਈਟ ਖੋਜ', application: 'ਐਪਲੀਕੇਸ਼ਨ', command: 'ਕਮਾਂਡ', noResults: 'ਇਸ ਲਈ ਕੋਈ ਨਤੀਜਾ ਨਹੀਂ',

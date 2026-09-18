@@ -1,14 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Wifi, WifiOff, Bluetooth, Search, LayoutGrid, Moon, Sun } from 'lucide-react';
 import { useOSStore } from '@/lib/os-store';
 import { useT } from '@/lib/use-i18n';
+import { shellTokens } from '@/lib/ui-tokens';
 import { format } from 'date-fns';
 import Logo from './Logo';
 
 const MenuBar: React.FC = () => {
   const {
     darkMode,
+    toggleDarkMode,
+    accentColor,
     toggleControlCenter,
     toggleNotificationCenter,
     toggleSpotlight,
@@ -18,19 +22,33 @@ const MenuBar: React.FC = () => {
     activeWindowId,
     setLockScreen,
     closeWindow,
-    toggleDarkMode,
     openWindow,
+    wifi,
+    bluetooth,
+    battery,
+    notifications,
   } = useOSStore();
 
   const t = useT();
+  const tokens = shellTokens(darkMode, accentColor);
 
   const [time, setTime] = useState(new Date());
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [battery] = useState(87);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  // Escape dismisses an open menu, matching the rest of the shell overlays.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setActiveMenu(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
   const activeWindow = windows.find((w) => w.id === activeWindowId);
@@ -53,6 +71,14 @@ const MenuBar: React.FC = () => {
     { label: t.menu.logOut, shortcut: '⇧⌘Q' },
   ];
 
+  const appMenu = [
+    { label: `${t.menu.aboutApp} ${activeWindow?.title || t.appName.finder}` },
+    { separator: true },
+    { label: t.menu.close, shortcut: '⌘W', action: () => { if (activeWindowId) closeWindow(activeWindowId); } },
+    { separator: true },
+    { label: t.menu.forceQuit, shortcut: '⌥⌘⎋', action: () => { if (activeWindowId) closeWindow(activeWindowId); } },
+  ];
+
   const fileMenu = [
     { label: t.menu.newWindow, shortcut: '⌘N' },
     { label: t.menu.open, shortcut: '⌘O' },
@@ -72,7 +98,7 @@ const MenuBar: React.FC = () => {
   ];
 
   const viewMenu = [
-    { label: darkMode ? t.menu.lightMode : t.menu.darkMode, action: toggleDarkMode },
+    { label: t.menu.darkMode, checked: darkMode, action: toggleDarkMode },
     { separator: true },
     { label: t.menu.enterFullScreen, shortcut: '⌃⌘F' },
   ];
@@ -101,7 +127,7 @@ const MenuBar: React.FC = () => {
 
   const menus = [
     { label: 'apple', title: '', items: appleMenu, isBold: false, isLogo: true },
-    { label: 'app', title: activeWindow?.title || t.appName.finder, items: [], isBold: true, isLogo: false },
+    { label: 'app', title: activeWindow?.title || t.appName.finder, items: appMenu, isBold: true, isLogo: false },
     { label: 'file', title: t.menu.file, items: fileMenu, isBold: false, isLogo: false },
     { label: 'edit', title: t.menu.edit, items: editMenu, isBold: false, isLogo: false },
     { label: 'view', title: t.menu.view, items: viewMenu, isBold: false, isLogo: false },
@@ -116,33 +142,35 @@ const MenuBar: React.FC = () => {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-[9999] flex items-center px-3 h-7 select-none"
-      style={{
-        background: darkMode ? '#14141c' : '#e0e0e8',
-        boxShadow: darkMode
-          ? 'inset 0 -1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)'
-          : 'inset 0 -1px 2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.7)',
-      }}
+      className={`fixed top-0 left-0 right-0 z-[9999] flex items-center px-3 h-7 select-none ${tokens.glassTopbarClass}`}
+      style={{ color: tokens.text }}
       onClick={() => setActiveMenu(null)}
     >
-      <div className="flex items-center gap-1 flex-1">
+      <div className="flex items-center gap-0.5 flex-1">
         {menus.map((menu) => (
           <div key={menu.label} className="relative">
             <button
-              className={`px-2.5 py-0.5 text-[13px] rounded-md transition-all ${
-                activeMenu === menu.label
-                  ? darkMode ? 'text-white' : 'text-black'
-                  : darkMode
-                  ? 'text-white/85 hover:bg-white/5'
-                  : 'text-black/75 hover:bg-black/5'
-              } ${menu.isBold ? 'font-semibold' : 'font-normal'}`}
-              style={activeMenu === menu.label ? (darkMode ? {
-                background: 'linear-gradient(145deg, #2a2a38, #1e1e28)',
-                boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.4), inset -1px -1px 2px rgba(255,255,255,0.04)',
-              } : {
-                background: 'linear-gradient(145deg, #f0f0f5, #d8d8e0)',
-                boxShadow: 'inset 2px 2px 5px rgba(0,0,0,0.1), inset -1px -1px 2px rgba(255,255,255,0.8)',
-              }) : {}}
+              className={`px-2.5 py-0.5 rounded-md transition-all ${menu.isBold ? 'font-semibold' : 'font-normal'}`}
+              style={{
+                fontSize: 12.5,
+                letterSpacing: '0.005em',
+                color: activeMenu === menu.label ? tokens.accentContrast : tokens.text,
+                background: activeMenu === menu.label ? tokens.accent : 'transparent',
+                boxShadow: activeMenu === menu.label ? `0 1px 6px ${tokens.accentGlow}` : 'none',
+              }}
+              onMouseEnter={(e) => {
+                if (activeMenu && activeMenu !== (menu.isLogo ? 'apple' : menu.label)) {
+                  setActiveMenu(menu.isLogo ? 'apple' : menu.label);
+                }
+                if (activeMenu !== (menu.isLogo ? 'apple' : menu.label)) {
+                  e.currentTarget.style.background = tokens.hover;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeMenu !== (menu.isLogo ? 'apple' : menu.label)) {
+                  e.currentTarget.style.background = 'transparent';
+                }
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 if (menu.isLogo) handleMenuClick('apple');
@@ -157,19 +185,19 @@ const MenuBar: React.FC = () => {
             </button>
             {activeMenu === (menu.isLogo ? 'apple' : menu.label) && menu.items.length > 0 && (
               <div
-                className="absolute top-7 left-0 rounded-xl py-1 min-w-[220px] z-[10000]"
+                className="absolute top-[26px] left-0 rounded-xl py-1 min-w-[230px] z-[10000] shell-panel-in"
                 style={{
-                  background: darkMode ? '#1e1e28' : '#ebebf2',
-                  boxShadow: darkMode
-                    ? '12px 12px 30px rgba(0,0,0,0.6), -4px -4px 14px rgba(255,255,255,0.02), inset 0 1px 0 rgba(255,255,255,0.06)'
-                    : '10px 10px 28px rgba(0,0,0,0.15), -4px -4px 14px rgba(255,255,255,0.9), inset 0 1px 0 rgba(255,255,255,0.5)',
-                  border: darkMode ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(0,0,0,0.04)',
+                  background: tokens.menu,
+                  boxShadow: tokens.shadow,
+                  border: `1px solid ${tokens.border}`,
+                  backdropFilter: 'blur(30px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(30px) saturate(180%)',
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {menu.items.map((item: any, i: number) =>
                   item.separator ? (
-                    <div key={i} className="my-1 mx-2 h-px" style={{ background: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)' }} />
+                    <div key={i} className="my-1 mx-2 h-px" style={{ background: tokens.divider }} />
                   ) : (
                     <button
                       key={i}
@@ -177,11 +205,24 @@ const MenuBar: React.FC = () => {
                         item.action?.();
                         setActiveMenu(null);
                       }}
-                      className="w-full flex items-center justify-between px-4 py-1 text-[13px] rounded-lg mx-0.5 transition-colors hover:bg-[#d70a53] hover:text-white"
-                      style={{ color: darkMode ? 'white' : '#1d1d1f', width: 'calc(100% - 4px)' }}
+                      className="group w-full flex items-center justify-between px-3 py-1 rounded-lg transition-colors"
+                      style={{ fontSize: 12.5, color: tokens.text, width: 'calc(100% - 8px)', margin: '0 4px' }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = tokens.accent;
+                        e.currentTarget.style.color = tokens.accentContrast;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = tokens.text;
+                      }}
                     >
-                      <span>{item.label}</span>
-                      {item.shortcut && <span className="text-xs opacity-60 ml-6">{item.shortcut}</span>}
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-3 inline-block" style={{ color: tokens.accent }}>
+                          {item.checked ? '✓' : ''}
+                        </span>
+                        {item.label}
+                      </span>
+                      {item.shortcut && <span className="opacity-55 ml-6">{item.shortcut}</span>}
                     </button>
                   )
                 )}
@@ -191,48 +232,97 @@ const MenuBar: React.FC = () => {
         ))}
       </div>
 
-      {/* Right side - Status icons */}
-      <div className="flex items-center gap-1">
+      {/* Right side — status icons */}
+      <div className="flex items-center gap-0.5">
         {/* Battery */}
-        <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-md ${darkMode ? 'text-white/80' : 'text-black/80'}`}>
-          <span className="text-[11px] font-medium">{battery}%</span>
-          <div className="relative w-6 h-3 rounded-sm border" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }}>
-            <div className="absolute inset-0.5 rounded-[1px]" style={{ width: `${battery * 0.7}%`, background: battery > 20 ? '#30D158' : '#FF3B30' }} />
-            <div className="absolute -right-1 top-1/2 -translate-y-1/2 w-0.5 h-1.5 rounded-r" style={{ background: darkMode ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' }} />
+        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md" style={{ color: tokens.icon }}>
+          <span style={{ fontSize: 11, fontWeight: 500 }}>{battery}%</span>
+          <div
+            className="relative w-6 h-3 rounded-[3px]"
+            style={{ border: `1px solid ${tokens.icon}`, opacity: 0.95 }}
+          >
+            <div
+              className="absolute rounded-[1px]"
+              style={{
+                inset: '1.5px',
+                width: `calc(${Math.min(battery, 100) * 0.72}% - 3px)`,
+                background: battery > 20 ? '#30D158' : '#FF3B30',
+              }}
+            />
+            <div
+              className="absolute -right-[3px] top-1/2 -translate-y-1/2 w-[2px] h-1.5 rounded-r"
+              style={{ background: tokens.icon, opacity: 0.6 }}
+            />
           </div>
         </div>
 
-        {/* WiFi */}
-        <svg className={`w-3.5 h-3.5 ${darkMode ? 'text-white/80' : 'text-black/80'}`} fill="currentColor" viewBox="0 0 640 512">
-          <path d="M318.4 446.6c-18.2 0-36.5-6.9-50.4-20.7-13.9-13.9-20.7-32.1-20.7-50.4 0-18.2 6.9-36.5 20.7-50.4 13.9-13.9 32.1-20.7 50.4-20.7 18.2 0 36.5 6.9 50.4 20.7 13.9 13.9 20.7 32.1 20.7 50.4 0 18.2-6.9 36.5-20.7 50.4-13.9 13.8-32.2 20.7-50.4 20.7zm245.6-119.3c-13.9-13.9-32.1-20.7-50.4-20.7-18.2 0-36.5 6.9-50.4 20.7L318.4 371.9 73.5 127c-13.9-13.9-32.1-20.7-50.4-20.7-18.2 0-36.5 6.9-50.4 20.7-13.9 13.9-20.7 32.1-20.7 50.4 0 18.2 6.9 36.5 20.7 50.4l269.7 269.7c13.9 13.9 32.1 20.7 50.4 20.7 18.2 0 36.5-6.9 50.4-20.7l220.8-220.8c13.9-13.9 20.7-32.1 20.7-50.4 0-18.2-6.9-36.5-20.7-50.4z"/>
-        </svg>
+        {/* Wi-Fi */}
+        <span className="px-1" style={{ color: tokens.icon, opacity: wifi ? 0.95 : 0.45 }} title={wifi ? 'Wi-Fi' : 'Wi-Fi off'}>
+          {wifi ? <Wifi size={13.5} strokeWidth={2.1} /> : <WifiOff size={13.5} strokeWidth={2.1} />}
+        </span>
+
+        {/* Bluetooth (only when enabled, like macOS) */}
+        {bluetooth && (
+          <span className="px-1" style={{ color: tokens.icon }} title="Bluetooth">
+            <Bluetooth size={13} strokeWidth={2.1} />
+          </span>
+        )}
+
+        {/* Appearance quick toggle */}
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleDarkMode(); }}
+          className="p-1 rounded-md transition-colors"
+          style={{ color: tokens.icon }}
+          title={darkMode ? t.menu.lightMode : t.menu.darkMode}
+        >
+          {darkMode ? <Sun size={13.5} strokeWidth={2.1} /> : <Moon size={13.5} strokeWidth={2.1} />}
+        </button>
 
         {/* Spotlight */}
         <button
           onClick={(e) => { e.stopPropagation(); toggleSpotlight(); }}
-          className={`p-1 rounded-md transition-colors ${darkMode ? 'text-white/80 hover:bg-white/10' : 'text-black/80 hover:bg-black/10'}`}
+          className="p-1 rounded-md transition-colors"
+          style={{ color: tokens.icon, background: 'transparent' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = tokens.hover; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+          title={t.spotlight.placeholder}
         >
-          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-          </svg>
+          <Search size={13.5} strokeWidth={2.1} />
         </button>
 
         {/* Control Center */}
         <button
           onClick={(e) => { e.stopPropagation(); toggleControlCenter(); }}
-          className={`p-1 rounded-md transition-colors ${controlCenterOpen ? (darkMode ? 'bg-white/20' : 'bg-black/20') : ''} ${darkMode ? 'text-white/80 hover:bg-white/10' : 'text-black/80 hover:bg-black/10'}`}
+          className="p-1 rounded-md transition-colors"
+          style={{ color: tokens.icon, background: controlCenterOpen ? tokens.hover : 'transparent' }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = tokens.hover; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = controlCenterOpen ? tokens.hover : 'transparent'; }}
+          title={t.notif.notifications}
         >
-          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M4 6h4v4H4V6zm6 0h4v4h-4V6zm6 0h4v4h-4V6zM4 14h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"/>
-          </svg>
+          <LayoutGrid size={13.5} strokeWidth={2.1} />
         </button>
 
-        {/* Date + Clock */}
+        {/* Date + clock + notification badge */}
         <button
           onClick={(e) => { e.stopPropagation(); toggleNotificationCenter(); }}
-          className={`px-2 py-0.5 text-xs rounded-md transition-colors ${notificationCenterOpen ? (darkMode ? 'bg-white/20' : 'bg-black/20') : ''} ${darkMode ? 'text-white/90 hover:bg-white/10' : 'text-black/90 hover:bg-black/10'} font-medium`}
+          className="relative px-2 py-0.5 rounded-md transition-colors"
+          style={{
+            fontSize: 12.5,
+            fontWeight: 500,
+            color: tokens.text,
+            background: notificationCenterOpen ? tokens.hover : 'transparent',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = tokens.hover; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = notificationCenterOpen ? tokens.hover : 'transparent'; }}
+          title={t.notif.notifications}
         >
           {format(time, 'EEE MMM d  h:mm aa')}
+          {unreadCount > 0 && (
+            <span
+              className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 rounded-full"
+              style={{ background: tokens.accent, boxShadow: `0 0 5px ${tokens.accentGlow}` }}
+            />
+          )}
         </button>
       </div>
     </div>

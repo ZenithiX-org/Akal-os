@@ -164,22 +164,35 @@ button, input, textarea, select, a {
    top-edge highlights for a realistic glass feel. */
 
 :root {
+  /* ---- Runtime accent -------------------------------------------------
+     Overridden inline on the desktop root by the OS store, so every shell
+     surface + app accent follows the user's choice in Settings. */
+  --accent: #d70a53;
+  --accent-soft: rgba(215, 10, 83, 0.16);
+  --accent-glow: rgba(215, 10, 83, 0.42);
+  --accent-contrast: #ffffff;
+
   /* Glass surface alphas (dark mode) */
   --glass-bg-dark: rgba(28, 28, 38, 0.55);
   --glass-bg-dark-2: rgba(38, 38, 50, 0.5);
-  --glass-bg-light: rgba(245, 245, 250, 0.6);
-  --glass-bg-light-2: rgba(235, 235, 242, 0.55);
+  --glass-bg-light: rgba(247, 247, 250, 0.62);
+  --glass-bg-light-2: rgba(240, 240, 245, 0.58);
   /* Glass borders */
   --glass-border-dark: rgba(255, 255, 255, 0.18);
   --glass-border-dark-strong: rgba(255, 255, 255, 0.28);
-  --glass-border-light: rgba(255, 255, 255, 0.55);
-  --glass-border-light-strong: rgba(255, 255, 255, 0.75);
+  --glass-border-light: rgba(255, 255, 255, 0.6);
+  --glass-border-light-strong: rgba(255, 255, 255, 0.8);
   /* Glass highlights (inset top edge) */
   --glass-highlight: rgba(255, 255, 255, 0.12);
-  --glass-highlight-light: rgba(255, 255, 255, 0.5);
-  /* Accent */
-  --glass-accent: #d70a53;
-  --glass-accent-soft: rgba(215, 10, 83, 0.15);
+  --glass-highlight-light: rgba(255, 255, 255, 0.8);
+  /* Text colors that sit on top of each glass flavor */
+  --glass-text-dark: rgba(255, 255, 255, 0.92);
+  --glass-text-dark-2: rgba(255, 255, 255, 0.6);
+  --glass-text-light: rgba(20, 20, 24, 0.92);
+  --glass-text-light-2: rgba(20, 20, 24, 0.55);
+  /* Accent aliases kept for existing app surfaces */
+  --glass-accent: var(--accent);
+  --glass-accent-soft: var(--accent-soft);
 }
 
 /* Base glass surface — dark mode (used by windows, panels, menus) */
@@ -206,12 +219,74 @@ button, input, textarea, select, a {
     inset 0 1px 0 var(--glass-highlight-light);
 }
 
+/* Light glass card — shell panels in light appearance */
+.glass-card-light {
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  background: var(--glass-bg-light-2);
+  border: 1px solid var(--glass-border-light);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), inset 0 1px 0 var(--glass-highlight-light);
+  transition: all 200ms ease;
+}
+.glass-card-light:hover {
+  background: rgba(252, 252, 255, 0.72);
+  border-color: var(--glass-border-light-strong);
+}
+
+/* Light top bar (menu bar in light appearance) */
+.glass-topbar-light {
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  background: rgba(246, 246, 250, 0.62);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* Light input / pill — shell chrome in light appearance */
+.glass-input-light {
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  color: rgba(20, 20, 24, 0.92);
+  outline: none;
+  transition: border-color 150ms ease;
+}
+.glass-input-light::placeholder {
+  color: rgba(20, 20, 24, 0.4);
+}
+.glass-input-light:focus {
+  border-color: var(--accent);
+}
+
+.glass-pill-light {
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  color: rgba(20, 20, 24, 0.8);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.glass-pill-light:hover {
+  background: rgba(255, 255, 255, 0.75);
+}
+.glass-pill-light.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 2px 10px var(--accent-glow);
+}
+
 /* Focused window glass — extra glow + stronger border */
 .glass-focused {
   box-shadow:
     0 32px 80px rgba(0, 0, 0, 0.6),
-    0 0 0 0.5px rgba(215, 10, 83, 0.2),
-    0 0 30px rgba(215, 10, 83, 0.08),
+    0 0 0 0.5px var(--accent-soft),
+    0 0 30px var(--accent-soft),
     inset 0 1px 0 var(--glass-border-dark-strong);
 }
 
@@ -294,10 +369,10 @@ button, input, textarea, select, a {
   background: rgba(255, 255, 255, 0.12);
 }
 .glass-pill.active {
-  background: var(--glass-accent);
-  color: #fff;
-  border-color: var(--glass-accent);
-  box-shadow: 0 2px 8px rgba(215, 10, 83, 0.4);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
+  box-shadow: 0 2px 10px var(--accent-glow);
 }
 
 /* Top bar glass (menu bar) */
@@ -317,30 +392,10 @@ button, input, textarea, select, a {
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Boot animation */
-@keyframes akal-boot-fade {
-  0% { opacity: 0; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1.05); }
-  100% { opacity: 1; transform: scale(1); }
-}
-.akal-boot-anim {
-  animation: akal-boot-fade 0.9s ease-out forwards;
-}
-
-/* Progress bar shimmer */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.shimmer {
-  background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* Text selection */
+/* Text selection — follows the runtime accent */
 ::selection {
-  background: rgba(0, 113, 227, 0.3);
+  background: var(--accent-soft);
+  color: inherit;
 }
 
 /* Focus styles */
@@ -348,24 +403,40 @@ input:focus, textarea:focus {
   outline: none;
 }
 
-/* Input range slider */
+/* Keyboard-only focus ring — accent-aware and never shown on mouse clicks */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Input range slider — slim macOS-style track with a tactile thumb */
 input[type="range"] {
   cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
-  height: 6px;
-  border-radius: 3px;
-  background: rgba(128,128,128,0.3);
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(128,128,128,0.32);
+  outline: none;
 }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  background: white;
+  background: #fff;
+  border: 0.5px solid rgba(0,0,0,0.14);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.12);
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-  cursor: pointer;
+}
+input[type="range"]:active::-webkit-slider-thumb {
+  transform: scale(1.24);
+  box-shadow: 0 0 0 5px var(--accent-soft);
 }
 input[type="range"]::-moz-range-thumb {
   width: 16px;
@@ -377,11 +448,6 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-/* Dock magnify helper */
-.dock-icon {
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
 /* Typing dots */
 @keyframes typing-bounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
@@ -391,107 +457,6 @@ input[type="range"]::-moz-range-thumb {
   animation: typing-bounce 1s infinite;
 }
 
-/* ===== Akal OS Boot Animations ===== */
-
-/* Pulsing glow ring behind the logo */
-@keyframes boot-pulse-ring {
-  0%   { transform: scale(0.8); opacity: 0; }
-  40%  { opacity: 0.7; }
-  100% { transform: scale(2.2); opacity: 0; }
-}
-.boot-pulse-ring {
-  animation: boot-pulse-ring 2.4s ease-out infinite;
-}
-
-/* Slow rotation for the orbital ring */
-@keyframes boot-orbit-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-.boot-orbit-spin {
-  animation: boot-orbit-spin 6s linear infinite;
-}
-
-/* Counter-rotation so orbiting dots stay upright */
-@keyframes boot-orbit-counter {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(-360deg); }
-}
-.boot-orbit-counter {
-  animation: boot-orbit-counter 6s linear infinite;
-}
-
-/* Gentle breathing for the logo */
-@keyframes boot-breathe {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(245,124,0,0.5)); }
-  50%      { transform: scale(1.06); filter: drop-shadow(0 0 28px rgba(245,124,0,0.8)); }
-}
-.boot-breathe {
-  animation: boot-breathe 2.8s ease-in-out infinite;
-}
-
-/* Floating particles drifting upward */
-@keyframes boot-particle-rise {
-  0%   { transform: translateY(0) translateX(0); opacity: 0; }
-  10%  { opacity: 0.6; }
-  90%  { opacity: 0.4; }
-  100% { transform: translateY(-100vh) translateX(var(--drift, 20px)); opacity: 0; }
-}
-.boot-particle {
-  animation: boot-particle-rise var(--dur, 8s) linear infinite;
-  animation-delay: var(--delay, 0s);
-}
-
-/* Shimmer sweep across the progress bar — uses longhand props to avoid
-   shorthand/non-shorthand conflicts when the parent animates width */
-@keyframes boot-progress-shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.boot-progress-shimmer {
-  backgroundImage: linear-gradient(90deg,
-    rgba(215,10,83,0) 0%,
-    rgba(245,124,0,0.9) 30%,
-    rgba(255,255,255,0.85) 50%,
-    rgba(245,124,0,0.9) 70%,
-    rgba(215,10,83,0) 100%);
-  backgroundSize: 200% 100%;
-  backgroundRepeat: no-repeat;
-  animation: boot-progress-shimmer 1.6s linear infinite;
-}
-
-/* Faint grid sweep behind boot */
-@keyframes boot-grid-sweep {
-  0%   { background-position: 0 0; }
-  100% { background-position: 48px 48px; }
-}
-.boot-grid-bg {
-  background-image:
-    linear-gradient(rgba(215,10,83,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(215,10,83,0.06) 1px, transparent 1px);
-  background-size: 48px 48px;
-  animation: boot-grid-sweep 4s linear infinite;
-}
-
-/* Rotating conic shimmer halo */
-@keyframes boot-conic-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-.boot-conic-halo {
-  background: conic-gradient(from 0deg, transparent 0%, rgba(215,10,83,0.5) 25%, transparent 50%, rgba(245,124,0,0.4) 75%, transparent 100%);
-  animation: boot-conic-spin 4s linear infinite;
-}
-
-/* Status text fade-in */
-@keyframes boot-status-fade {
-  0%   { opacity: 0; transform: translateY(4px); }
-  100% { opacity: 0.7; transform: translateY(0); }
-}
-.boot-status {
-  animation: boot-status-fade 0.6s ease-out forwards;
-}
-
 /* ===== Neomorphism design tokens & components ===== */
 
 :root {
@@ -499,27 +464,6 @@ input[type="range"]::-moz-range-thumb {
   --neo-bg-light: #2a2a3c;
   --neo-shadow-dark: rgba(0,0,0,0.5);
   --neo-shadow-light: rgba(255,255,255,0.05);
-}
-
-/* Neomorphic raised surface (extruded button / tile) */
-.neo-raised {
-  background: var(--neo-bg);
-  border-radius: 18px;
-  box-shadow:
-    8px 8px 16px var(--neo-shadow-dark),
-    -8px -8px 16px var(--neo-shadow-light);
-  border: 1px solid rgba(255,255,255,0.04);
-  transition: box-shadow 200ms ease, transform 200ms ease;
-}
-.neo-raised:hover {
-  box-shadow:
-    6px 6px 12px var(--neo-shadow-dark),
-    -6px -6px 12px var(--neo-shadow-light);
-}
-.neo-raised:active, .neo-raised.is-pressed {
-  box-shadow:
-    inset 4px 4px 8px var(--neo-shadow-dark),
-    inset -4px -4px 8px var(--neo-shadow-light);
 }
 
 /* Neomorphic inset surface (recessed / input field) */
@@ -556,25 +500,70 @@ input[type="range"]::-moz-range-thumb {
   transform: translateY(-1px);
 }
 
-/* Neomorphic toggle (switch) — pill with pressed knob */
-.neo-toggle-track {
-  background: linear-gradient(145deg, #1a1a26, #262638);
-  box-shadow:
-    inset 3px 3px 6px rgba(0,0,0,0.5),
-    inset -2px -2px 4px rgba(255,255,255,0.04);
+/* ===== Shell polish utilities ===== */
+
+/* Fully hidden scrollbars (Launchpad, dock-adjacent overlays) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.neo-toggle-knob {
-  background: linear-gradient(145deg, #f5f5f7, #d0d0d4);
-  box-shadow:
-    3px 3px 6px rgba(0,0,0,0.4),
-    -1px -1px 2px rgba(255,255,255,0.4);
+.no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
-.neo-toggle-knob.on {
-  background: linear-gradient(145deg, #ff3b7a, #d70a53);
-  box-shadow:
-    3px 3px 6px rgba(215,10,83,0.4),
-    -1px -1px 2px rgba(255,255,255,0.2),
-    0 0 12px rgba(215,10,83,0.3);
+
+/* Frosted dock shell — brighter than a panel, with a hairline inner edge */
+.dock-glass {
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+}
+.dock-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 55%);
+}
+
+/* Panel + menu entrance (shell overlays, dropdowns) */
+@keyframes shell-panel-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.shell-panel-in {
+  animation: shell-panel-in 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Accent helpers */
+.accent-bg {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.accent-glow {
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+/* Mission Control window preview — accent ring + lift on hover */
+.mission-card {
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+.mission-card:hover {
+  box-shadow: 0 0 0 3px var(--accent), 0 18px 40px rgba(0, 0, 0, 0.45);
+  transform: translateY(-3px);
+}
+
+/* Respect reduced-motion preferences across the whole OS */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Neomorphic container (dock / panel background) */

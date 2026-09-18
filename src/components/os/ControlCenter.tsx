@@ -1,75 +1,118 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Wifi, Bluetooth, Radio, Moon, Target, Sunrise, MonitorPlay,
+  BatteryMedium, Globe, Volume2, SunMedium, type LucideIcon,
+} from 'lucide-react';
 import { useOSStore } from '@/lib/os-store';
 import { useT, useLanguage } from '@/lib/use-i18n';
+import { shellTokens, type ShellTokens } from '@/lib/ui-tokens';
 import type { Language } from '@/lib/i18n';
 
-interface ToggleButtonProps {
+interface ToggleTileProps {
   active: boolean;
   label: string;
-  icon: string;
+  sub: string;
+  icon: LucideIcon;
   onClick: () => void;
   color?: string;
-  darkMode: boolean;
+  tokens: ShellTokens;
 }
 
-const ToggleButton: React.FC<ToggleButtonProps> = ({ active, label, icon, onClick, color = '#0071E3', darkMode }) => (
-  <button
-    onClick={onClick}
-    className="flex flex-col items-start p-3 rounded-xl transition-all duration-200 w-full"
-    style={{
-      background: active ? color : darkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-      color: active ? 'white' : darkMode ? 'white' : 'black',
-      border: active ? `1px solid ${color}` : darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)',
-      backdropFilter: 'blur(20px)',
-    }}
-  >
-    <span className="text-lg mb-1">{icon}</span>
-    <span className="text-xs font-semibold leading-tight">{label}</span>
-    <span className="text-xs opacity-70">{active ? 'On' : 'Off'}</span>
-  </button>
-);
+const ToggleTile: React.FC<ToggleTileProps> = ({ active, label, sub, icon: Icon, onClick, color, tokens }) => {
+  const chip = color || tokens.accent;
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-start gap-1.5 p-2.5 rounded-2xl w-full text-left transition-all"
+      style={{
+        background: tokens.surfaceMuted,
+        border: `1px solid ${active ? chip : tokens.border}`,
+        boxShadow: active ? `0 4px 14px ${color ? 'rgba(0,0,0,0.25)' : tokens.accentGlow}` : 'none',
+      }}
+      aria-pressed={active}
+    >
+      <span
+        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{
+          background: active ? chip : tokens.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.09)',
+          color: active ? '#fff' : tokens.text,
+          transition: 'background 150ms ease',
+        }}
+      >
+        <Icon size={14} strokeWidth={2.2} />
+      </span>
+      <span className="leading-tight" style={{ fontSize: 12, fontWeight: 600, color: tokens.text }}>{label}</span>
+      <span className="leading-tight" style={{ fontSize: 10, color: tokens.subText }}>{sub}</span>
+    </button>
+  );
+};
 
-interface SliderControlProps {
-  icon: string;
+interface SliderRowProps {
+  icon: LucideIcon;
+  label: string;
   value: number;
   onChange: (v: number) => void;
-  label: string;
-  darkMode: boolean;
+  tokens: ShellTokens;
 }
 
-const SliderControl: React.FC<SliderControlProps> = ({ icon, value, onChange, label, darkMode }) => (
-  <div className="relative flex items-center gap-3 p-3 rounded-xl overflow-hidden" style={{ background: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', border: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)' }}>
-    <div className="absolute inset-y-0 left-0 rounded-xl opacity-25" style={{ width: `${value}%`, background: 'white' }} />
-    <span className="relative text-base z-10">{icon}</span>
-    <div className="relative flex-1 z-10">
-      <div className="text-xs font-medium mb-1.5" style={{ color: darkMode ? 'white' : 'black' }}>{label}</div>
-      <input type="range" min="0" max="100" value={value} onChange={(e) => onChange(Number(e.target.value))} className="w-full" style={{ accentColor: '#0071E3' }} />
+const SliderRow: React.FC<SliderRowProps> = ({ icon: Icon, label, value, onChange, tokens }) => {
+  const rest = tokens.dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.14)';
+  return (
+    <div
+      className="flex items-center gap-3 p-2.5 rounded-2xl"
+      style={{ background: tokens.surfaceMuted, border: `1px solid ${tokens.border}` }}
+    >
+      <span
+        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ background: tokens.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.09)', color: tokens.text }}
+      >
+        <Icon size={14} strokeWidth={2.2} />
+      </span>
+      <div className="flex-1 min-w-0">
+        <div className="mb-1.5" style={{ fontSize: 11, fontWeight: 600, color: tokens.text }}>{label}</div>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-full"
+          style={{
+            background: `linear-gradient(to right, ${tokens.accent} 0%, ${tokens.accent} ${value}%, ${rest} ${value}%, ${rest} 100%)`,
+          }}
+          aria-label={label}
+        />
+      </div>
+      <span className="flex-shrink-0" style={{ fontSize: 11, fontWeight: 500, color: tokens.subText }}>{value}%</span>
     </div>
-    <span className="relative text-xs font-medium z-10" style={{ color: darkMode ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.6)' }}>{value}%</span>
-  </div>
-);
+  );
+};
 
-interface LangButtonProps {
+interface PillProps {
   active: boolean;
   label: string;
   onClick: () => void;
-  darkMode: boolean;
+  tokens: ShellTokens;
 }
 
-const LangButton: React.FC<LangButtonProps> = ({ active, label, onClick, darkMode }) => (
+const Pill: React.FC<PillProps> = ({ active, label, onClick, tokens }) => (
   <button
     onClick={onClick}
-    className="flex flex-col items-center justify-center p-2.5 rounded-xl transition-all duration-200 w-full"
+    className="py-1.5 rounded-full transition-all"
     style={{
-      background: active ? '#0071E3' : darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-      color: active ? 'white' : darkMode ? 'white' : 'black',
-      border: active ? '1px solid #0071E3' : darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)',
+      fontSize: 11.5,
+      fontWeight: 600,
+      background: active ? tokens.accent : tokens.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.07)',
+      color: active ? tokens.accentContrast : tokens.text,
+      border: `1px solid ${active ? tokens.accent : 'transparent'}`,
+      boxShadow: active ? `0 2px 8px ${tokens.accentGlow}` : 'none',
     }}
+    aria-pressed={active}
   >
-    <span className="text-sm font-semibold leading-tight">{label}</span>
+    {label}
   </button>
 );
 
@@ -79,6 +122,7 @@ const ControlCenter: React.FC = () => {
     toggleControlCenter,
     darkMode,
     toggleDarkMode,
+    accentColor,
     wifi,
     toggleWifi,
     bluetooth,
@@ -97,7 +141,10 @@ const ControlCenter: React.FC = () => {
   } = useOSStore();
 
   const t = useT();
+  const tokens = shellTokens(darkMode, accentColor);
   const [language, setLanguage] = useLanguage();
+  // Night Shift is cosmetic in Akal OS — keep it locally stateful so it feels alive.
+  const [nightShift, setNightShift] = useState(true);
 
   return (
     <AnimatePresence>
@@ -105,76 +152,169 @@ const ControlCenter: React.FC = () => {
         <>
           <div className="fixed inset-0 z-[9000]" onClick={toggleControlCenter} />
           <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: -10 }}
+            initial={{ opacity: 0, scale: 0.94, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: -10 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="fixed top-8 right-2 z-[9001] w-80 rounded-2xl p-3 space-y-2 glass-surface"
+            exit={{ opacity: 0, scale: 0.94, y: -8 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+            className={`fixed top-8 right-2 z-[9001] w-[320px] rounded-3xl p-3 space-y-2.5 ${tokens.glassClass}`}
+            style={{ color: tokens.text }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="grid grid-cols-2 gap-2">
               {/* Connectivity card */}
-              <div className="rounded-xl p-3 space-y-2" style={{ background: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', border: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)' }}>
-                <button onClick={toggleWifi} className="flex items-center gap-2 w-full">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm" style={{ background: wifi ? '#0071E3' : darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', color: wifi ? 'white' : darkMode ? 'white' : 'black', boxShadow: wifi ? '0 2px 8px rgba(0,113,227,0.4)' : 'none' }}>📶</div>
-                  <div className="text-left">
-                    <div className="text-xs font-semibold" style={{ color: darkMode ? 'white' : 'black' }}>{t.control.wifi}</div>
-                    <div className="text-xs opacity-60" style={{ color: darkMode ? 'white' : 'black' }}>{wifi ? t.control.wifiNetwork : t.control.off}</div>
-                  </div>
+              <div
+                className="rounded-2xl p-2.5 space-y-2"
+                style={{ background: tokens.surfaceMuted, border: `1px solid ${tokens.border}` }}
+              >
+                <button onClick={toggleWifi} className="flex items-center gap-2 w-full text-left">
+                  <span
+                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: wifi ? tokens.accent : tokens.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.09)',
+                      color: wifi ? '#fff' : tokens.text,
+                    }}
+                  >
+                    <Wifi size={14} strokeWidth={2.2} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block" style={{ fontSize: 11, fontWeight: 600, color: tokens.text }}>{t.control.wifi}</span>
+                    <span className="block truncate" style={{ fontSize: 10, color: tokens.subText }}>
+                      {wifi ? t.control.wifiNetwork : t.control.off}
+                    </span>
+                  </span>
                 </button>
-                <button onClick={toggleBluetooth} className="flex items-center gap-2 w-full">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm" style={{ background: bluetooth ? '#0071E3' : darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', color: bluetooth ? 'white' : darkMode ? 'white' : 'black', boxShadow: bluetooth ? '0 2px 8px rgba(0,113,227,0.4)' : 'none' }}>🔵</div>
-                  <div className="text-left">
-                    <div className="text-xs font-semibold" style={{ color: darkMode ? 'white' : 'black' }}>{t.control.bluetooth}</div>
-                    <div className="text-xs opacity-60" style={{ color: darkMode ? 'white' : 'black' }}>{bluetooth ? t.control.on : t.control.off}</div>
-                  </div>
+                <button onClick={toggleBluetooth} className="flex items-center gap-2 w-full text-left">
+                  <span
+                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{
+                      background: bluetooth ? tokens.accent : tokens.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.09)',
+                      color: bluetooth ? '#fff' : tokens.text,
+                    }}
+                  >
+                    <Bluetooth size={14} strokeWidth={2.2} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block" style={{ fontSize: 11, fontWeight: 600, color: tokens.text }}>{t.control.bluetooth}</span>
+                    <span className="block truncate" style={{ fontSize: 10, color: tokens.subText }}>
+                      {bluetooth ? t.control.on : t.control.off}
+                    </span>
+                  </span>
                 </button>
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm" style={{ background: '#0071E3', color: 'white', boxShadow: '0 2px 8px rgba(0,113,227,0.4)' }}>📡</div>
-                  <div>
-                    <div className="text-xs font-semibold" style={{ color: darkMode ? 'white' : 'black' }}>{t.control.airdrop}</div>
-                    <div className="text-xs opacity-60" style={{ color: darkMode ? 'white' : 'black' }}>{t.control.contactsOnly}</div>
-                  </div>
+                  <span
+                    className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: tokens.accent, color: '#fff' }}
+                  >
+                    <Radio size={14} strokeWidth={2.2} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block" style={{ fontSize: 11, fontWeight: 600, color: tokens.text }}>{t.control.airdrop}</span>
+                    <span className="block truncate" style={{ fontSize: 10, color: tokens.subText }}>{t.control.contactsOnly}</span>
+                  </span>
                 </div>
               </div>
+
               <div className="space-y-2">
-                <ToggleButton active={doNotDisturb} label={t.control.doNotDisturb} icon="🌙" onClick={toggleDoNotDisturb} color="#5E5CE6" darkMode={darkMode} />
-                <ToggleButton active={focusMode} label={t.control.focus} icon="🎯" onClick={toggleFocusMode} color="#32ADE6" darkMode={darkMode} />
+                <ToggleTile
+                  active={doNotDisturb}
+                  label={t.control.doNotDisturb}
+                  sub={doNotDisturb ? t.control.on : t.control.off}
+                  icon={Moon}
+                  onClick={toggleDoNotDisturb}
+                  color="#5E5CE6"
+                  tokens={tokens}
+                />
+                <ToggleTile
+                  active={focusMode}
+                  label={t.control.focus}
+                  sub={focusMode ? t.control.on : t.control.off}
+                  icon={Target}
+                  onClick={toggleFocusMode}
+                  color="#32ADE6"
+                  tokens={tokens}
+                />
               </div>
             </div>
 
-            <SliderControl icon="☀️" value={brightness} onChange={setBrightness} label={t.control.display} darkMode={darkMode} />
-            <SliderControl icon="🔊" value={volume} onChange={setVolume} label={t.control.sound} darkMode={darkMode} />
+            <SliderRow icon={SunMedium} label={t.control.display} value={brightness} onChange={setBrightness} tokens={tokens} />
+            <SliderRow icon={Volume2} label={t.control.sound} value={volume} onChange={setVolume} tokens={tokens} />
 
             <div className="grid grid-cols-3 gap-2">
-              <ToggleButton active={darkMode} label={t.control.darkMode} icon="🌑" onClick={toggleDarkMode} darkMode={darkMode} />
-              <ToggleButton active={true} label={t.control.nightShift} icon="🌅" onClick={() => {}} color="#FF9F0A" darkMode={darkMode} />
-              <ToggleButton active={airplayEnabled} label={t.control.airplay} icon="📺" onClick={toggleAirplay} color="#32ADE6" darkMode={darkMode} />
+              <ToggleTile
+                active={darkMode}
+                label={t.control.darkMode}
+                sub={darkMode ? t.control.on : t.control.off}
+                icon={Moon}
+                onClick={toggleDarkMode}
+                tokens={tokens}
+              />
+              <ToggleTile
+                active={nightShift}
+                label={t.control.nightShift}
+                sub={nightShift ? t.control.on : t.control.off}
+                icon={Sunrise}
+                onClick={() => setNightShift((v) => !v)}
+                color="#FF9F0A"
+                tokens={tokens}
+              />
+              <ToggleTile
+                active={airplayEnabled}
+                label={t.control.airplay}
+                sub={airplayEnabled ? t.control.on : t.control.off}
+                icon={MonitorPlay}
+                onClick={toggleAirplay}
+                color="#32ADE6"
+                tokens={tokens}
+              />
             </div>
 
             {/* Language selector */}
-            <div className="rounded-xl p-3" style={{ background: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', border: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)' }}>
-              <div className="text-xs font-semibold mb-2 flex items-center gap-2" style={{ color: darkMode ? 'white' : 'black' }}>
-                <span>🌐</span>
+            <div
+              className="rounded-2xl p-2.5"
+              style={{ background: tokens.surfaceMuted, border: `1px solid ${tokens.border}` }}
+            >
+              <div className="flex items-center gap-2 mb-2" style={{ fontSize: 11, fontWeight: 600, color: tokens.text }}>
+                <Globe size={13} strokeWidth={2.2} />
                 <span>{t.control.language}</span>
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <LangButton active={language === 'en'} label={t.control.english} onClick={() => setLanguage('en' as Language)} darkMode={darkMode} />
-                <LangButton active={language === 'pa'} label={t.control.punjabi} onClick={() => setLanguage('pa' as Language)} darkMode={darkMode} />
+                <Pill active={language === 'en'} label={t.control.english} onClick={() => setLanguage('en' as Language)} tokens={tokens} />
+                <Pill active={language === 'pa'} label={t.control.punjabi} onClick={() => setLanguage('pa' as Language)} tokens={tokens} />
               </div>
             </div>
 
             {/* Battery */}
-            <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', border: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.04)' }}>
+            <div
+              className="flex items-center justify-between p-2.5 rounded-2xl"
+              style={{ background: tokens.surfaceMuted, border: `1px solid ${tokens.border}` }}
+            >
               <div className="flex items-center gap-2">
-                <span className="text-base">🔋</span>
-                <span className="text-sm font-medium" style={{ color: darkMode ? 'white' : 'black' }}>{t.control.battery}</span>
+                <span
+                  className="w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{
+                    background: battery > 20 ? 'rgba(48,209,88,0.18)' : 'rgba(255,59,48,0.18)',
+                    color: battery > 20 ? '#30D158' : '#FF3B30',
+                  }}
+                >
+                  <BatteryMedium size={14} strokeWidth={2.2} />
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: tokens.text }}>{t.control.battery}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-24 h-2.5 rounded-full overflow-hidden" style={{ background: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)' }}>
-                  <div className="h-full rounded-full" style={{ width: `${battery}%`, background: battery > 20 ? '#30D158' : '#FF3B30', boxShadow: '0 0 8px rgba(48,209,88,0.4)' }} />
+                <div
+                  className="w-20 h-2 rounded-full overflow-hidden"
+                  style={{ background: tokens.dark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)' }}
+                >
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${battery}%`,
+                      background: battery > 20 ? '#30D158' : '#FF3B30',
+                      boxShadow: `0 0 8px ${battery > 20 ? 'rgba(48,209,88,0.45)' : 'rgba(255,59,48,0.45)'}`,
+                    }}
+                  />
                 </div>
-                <span className="text-xs font-medium" style={{ color: darkMode ? 'white' : 'black' }}>{battery}%</span>
+                <span style={{ fontSize: 11, fontWeight: 500, color: tokens.text }}>{battery}%</span>
               </div>
             </div>
           </motion.div>

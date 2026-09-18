@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Search } from 'lucide-react';
 import { useOSStore } from '@/lib/os-store';
 import { useT } from '@/lib/use-i18n';
+import { shellTokens } from '@/lib/ui-tokens';
+import { AppIcons } from './AppIcons';
 
 interface SearchItem {
   id: string;
@@ -14,8 +17,9 @@ interface SearchItem {
 }
 
 const Spotlight: React.FC = () => {
-  const { spotlightOpen, toggleSpotlight, darkMode, openWindow, toggleDarkMode, setLockScreen } = useOSStore();
+  const { spotlightOpen, toggleSpotlight, darkMode, accentColor, openWindow, toggleDarkMode, setLockScreen } = useOSStore();
   const t = useT();
+  const tokens = shellTokens(darkMode, accentColor);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -110,20 +114,19 @@ const Spotlight: React.FC = () => {
     <AnimatePresence>
       {spotlightOpen && (
         <>
-          <div className="fixed inset-0 z-[9700]" onClick={closeSpotlight} style={{ background: 'rgba(0,0,0,0.2)' }} />
+          <div className="fixed inset-0 z-[9700]" onClick={closeSpotlight} style={{ background: 'rgba(0,0,0,0.35)' }} />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            className="fixed top-1/4 left-1/2 -translate-x-1/2 z-[9701] w-[600px] max-w-[90vw] rounded-2xl overflow-hidden glass-surface"
+            className={`fixed top-1/4 left-1/2 -translate-x-1/2 z-[9701] w-[620px] max-w-[92vw] rounded-2xl overflow-hidden ${tokens.glassClass}`}
+            style={{ color: tokens.text }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Search input */}
-            <div className="flex items-center gap-3 px-4 py-3">
-              <svg className="w-5 h-5 opacity-40" fill="currentColor" viewBox="0 0 20 20" style={{ color: darkMode ? 'white' : 'black' }}>
-                <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
-              </svg>
+            <div className="flex items-center gap-3 px-4 py-3.5">
+              <Search size={18} strokeWidth={2.2} style={{ color: tokens.subText }} />
               <input
                 ref={inputRef}
                 type="text"
@@ -131,50 +134,78 @@ const Spotlight: React.FC = () => {
                 onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
                 onKeyDown={handleKeyDown}
                 placeholder={t.spotlight.placeholder}
-                className="flex-1 bg-transparent outline-none text-lg"
-                style={{ color: darkMode ? 'white' : 'black' }}
+                className="flex-1 bg-transparent outline-none"
+                style={{ fontSize: 17, color: tokens.text, caretColor: tokens.accent }}
               />
             </div>
 
             {/* Calculator result */}
             {calcResult !== null && (
-              <div className="px-4 pb-3 flex items-baseline justify-between border-t" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', paddingTop: '12px' }}>
-                <span className="text-sm opacity-50" style={{ color: darkMode ? 'white' : 'black' }}>{query} =</span>
-                <span className="text-2xl font-light" style={{ color: darkMode ? 'white' : 'black' }}>{calcResult}</span>
+              <div
+                className="px-4 pb-3 flex items-baseline justify-between"
+                style={{ borderTop: `1px solid ${tokens.divider}`, paddingTop: 12 }}
+              >
+                <span style={{ fontSize: 13, color: tokens.subText }}>{query} =</span>
+                <span className="font-light" style={{ fontSize: 24, color: tokens.accent }}>{calcResult}</span>
               </div>
             )}
 
             {/* Results */}
             {filtered.length > 0 && (
-              <div className="border-t max-h-80 overflow-y-auto" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
-                {filtered.map((item, i) => (
-                  <button
-                    key={item.id}
-                    onClick={() => { item.action(); closeSpotlight(); }}
-                    onMouseEnter={() => setSelectedIndex(i)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                    style={{
-                      background: i === selectedIndex ? 'rgba(0,113,227,0.85)' : 'transparent',
-                      color: i === selectedIndex ? 'white' : darkMode ? 'white' : 'black',
-                    }}
-                  >
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-lg flex-shrink-0" style={{ background: i === selectedIndex ? 'rgba(255,255,255,0.2)' : 'rgba(128,128,128,0.15)' }}>
-                      {item.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{item.name}</div>
-                      <div className="text-xs opacity-60">{item.category}</div>
-                    </div>
-                  </button>
-                ))}
+              <div
+                className="max-h-80 overflow-y-auto"
+                style={{ borderTop: `1px solid ${tokens.divider}` }}
+              >
+                {filtered.map((item, i) => {
+                  const IconComp = AppIcons[item.id];
+                  const active = i === selectedIndex;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => { item.action(); closeSpotlight(); }}
+                      onMouseEnter={() => setSelectedIndex(i)}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
+                      style={{
+                        background: active ? tokens.accent : 'transparent',
+                        color: active ? tokens.accentContrast : tokens.text,
+                      }}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {IconComp ? <IconComp size={30} /> : <span style={{ fontSize: 16 }}>{item.icon}</span>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate" style={{ fontSize: 13, fontWeight: 500 }}>{item.name}</div>
+                        <div className="truncate" style={{ fontSize: 11, color: active ? 'rgba(255,255,255,0.75)' : tokens.subText }}>
+                          {item.category}
+                        </div>
+                      </div>
+                      {active && (
+                        <span className="flex-shrink-0" style={{ fontSize: 11, opacity: 0.8 }}>↵</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
             {filtered.length === 0 && calcResult === null && (
-              <div className="px-4 py-8 text-center border-t" style={{ borderColor: darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
-                <span className="text-sm opacity-50" style={{ color: darkMode ? 'white' : 'black' }}>{t.spotlight.noResults} &quot;{query}&quot;</span>
+              <div
+                className="px-4 py-8 text-center"
+                style={{ borderTop: `1px solid ${tokens.divider}`, color: tokens.subText, fontSize: 13 }}
+              >
+                {t.spotlight.noResults} &quot;{query}&quot;
               </div>
             )}
+
+            {/* Keyboard hints — the quiet footer that makes Spotlight feel finished */}
+            <div
+              className="flex items-center justify-center gap-4 py-2"
+              style={{ borderTop: `1px solid ${tokens.divider}`, fontSize: 10.5, color: tokens.faintText }}
+            >
+              <span>↑↓ Navigate</span>
+              <span>↵ Open</span>
+              <span>esc Close</span>
+            </div>
           </motion.div>
         </>
       )}

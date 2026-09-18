@@ -2,29 +2,39 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Wifi, WifiOff, Volume2, BatteryMedium } from 'lucide-react';
 import { useOSStore } from '@/lib/os-store';
 import { useT } from '@/lib/use-i18n';
+import { withAlpha } from '@/lib/ui-tokens';
 import { format } from 'date-fns';
 import Logo from './Logo';
 
 const LockScreen: React.FC = () => {
-  const { setLockScreen, wallpaper } = useOSStore();
+  const { setLockScreen, wallpaper, accentColor, battery, wifi, volume } = useOSStore();
   const t = useT();
   const [time, setTime] = useState(new Date());
   const [password, setPassword] = useState('');
   const [showInput, setShowInput] = useState(false);
-  const [error] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
+  // Keyboard-first unlock: any key (or Enter) reveals the password field.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || (e.key.length === 1 && !showInput)) {
+        setShowInput(true);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [showInput]);
+
   const handleUnlock = (e: React.FormEvent) => {
     e.preventDefault();
     setLockScreen(false);
-    void error;
-    void password;
   };
 
   const isGradient = wallpaper.startsWith('linear-gradient') || wallpaper.startsWith('radial-gradient');
@@ -69,9 +79,19 @@ const LockScreen: React.FC = () => {
                 placeholder={t.lock.enterPassword}
                 autoFocus
                 className="px-4 py-2.5 rounded-xl text-white text-center outline-none text-sm w-52 placeholder-white/50"
-                style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: error ? '1px solid #FF3B30' : '1px solid rgba(255,255,255,0.3)', caretColor: 'white', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.1)' }}
+                style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', border: '1px solid rgba(255,255,255,0.3)', caretColor: 'white', boxShadow: 'inset 0 1px 1px rgba(255,255,255,0.1)' }}
               />
-              <button type="submit" className="px-6 py-2 rounded-xl text-white text-sm font-medium transition-all hover:brightness-110" style={{ background: 'rgba(0,113,227,0.7)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 8px 24px rgba(0,113,227,0.3), inset 0 1px 1px rgba(255,255,255,0.2)' }}>
+              <button
+                type="submit"
+                className="px-6 py-2 rounded-xl text-white text-sm font-medium transition-all hover:brightness-110"
+                style={{
+                  background: withAlpha(accentColor, 0.95),
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255,255,255,0.25)',
+                  boxShadow: `0 8px 24px ${withAlpha(accentColor, 0.5)}, inset 0 1px 1px rgba(255,255,255,0.25)`,
+                }}
+              >
                 {t.lock.unlock}
               </button>
               <button type="button" onClick={() => setLockScreen(false)} className="text-xs text-white/60 hover:text-white/90 transition-colors">
